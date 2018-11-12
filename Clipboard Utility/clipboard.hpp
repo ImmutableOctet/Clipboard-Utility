@@ -47,17 +47,23 @@ namespace clip
 			}
 			*/
 
-			// Open a memory context for the format specified.
-			// The clipboard object must have an open handle to the system's clipboard.
+			// This simply redirects to the 'context' command.
 			// NOTE: When using this operator from the context of this class, beware of pointer-indexing.
-			memory operator[](format type) const;
+			inline memory operator[](format type) const
+			{
+				return context(type);
+			}
 
 			// Methods:
 			inline bool is_open() const { return access; }
 			inline bool is_closed() const { return !is_open(); }
 
-			bool open(const window& owner = anonymous_window);
-			bool close(const window& owner = anonymous_window);
+			bool open(const window& owner=anonymous_window);
+			bool close(const window& owner=anonymous_window);
+
+			// This opens a memory-context for the format specified.
+			// The clipboard object must have an open handle to the system's clipboard.
+			memory context(format type) const;
 
 			std::string read_text() const;
 

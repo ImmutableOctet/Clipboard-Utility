@@ -39,7 +39,7 @@ namespace clip
 
 		ASSERT(is_open());
 
-		auto m = (*this)[format::TEXT];
+		auto m = context(format::TEXT);
 
 		// Check if we could open the memory segment:
 		if (m)
@@ -63,13 +63,6 @@ namespace clip
 		}
 
 		return T();
-	}
-
-	memory clipboard::operator[](format type) const
-	{
-		ASSERT(is_open());
-
-		return memory::open(type);
 	}
 
 	bool clipboard::open(const window& owner)
@@ -102,6 +95,13 @@ namespace clip
 		#endif
 		
 		return is_closed();
+	}
+
+	memory clipboard::context(format type) const
+	{
+		ASSERT(is_open());
+
+		return memory::open(type);
 	}
 
 	bool clipboard::log(const path_t& file_path, bool append) const
@@ -165,7 +165,7 @@ namespace clip
 		if (is_closed())
 			return 0;
 		
-		return (*this)[type].size();
+		return context(type).size();
 	}
 
 	std::size_t clipboard::text_length() const
@@ -174,8 +174,6 @@ namespace clip
 		if (is_closed())
 			return 0;
 
-		auto m = (*this)[format::TEXT];
-
-		return m.text_length();
+		return context(format::TEXT).text_length();
 	}
 }
