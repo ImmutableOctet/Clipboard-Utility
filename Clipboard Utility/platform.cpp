@@ -199,25 +199,28 @@ namespace clip
 		std::size_t memory_map::size() const
 		{
 			// Make sure our handle is valid before
-			// asking the operating system about it:
-			if (exists())
-			{
-				#ifdef CLIP_PLATFORM_WINDOWS
-					// Ask Windows how big the clipboard is.
-					return GlobalSize(resource_handle);
-				#endif
-			}
+			// asking the operating system about it.
+			if (!exists())
+				return 0;
+
+			#ifdef CLIP_PLATFORM_WINDOWS
+				// Ask Windows how big the clipboard is.
+				return GlobalSize(resource_handle);
+			#endif
 
 			return 0;
 		}
 
-		std::size_t memory_map::text_size()
+		std::size_t memory_map::text_length()
 		{
+			if (!exists())
+				return 0;
+
 			// Create a guarded lock in order to view clipboard memory.
 			guard view(*this);
 
 			// Retrieve a raw-pointer to the requested clipboard data-segment.
-			auto raw_data = view.ptr();
+			const auto raw_data = view.ptr();
 
 			// Return the length of our zero-terminated character-data.
 			return strlen(reinterpret_cast<const char*>(raw_data));

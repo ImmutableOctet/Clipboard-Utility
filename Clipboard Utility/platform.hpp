@@ -160,7 +160,7 @@ namespace clip
 
 					If a TEXT-segment does not exist, this method shall return zero.
 				*/
-				std::size_t text_size(); // noexcept
+				std::size_t text_length(); // noexcept
 
 				inline operator raw_memory_ptr() const
 				{

@@ -2,6 +2,7 @@
 
 #include <type_traits>
 #include <ostream>
+#include <cstddef>
 
 #include "assert.hpp"
 #include "platform.hpp"
@@ -27,7 +28,7 @@ namespace clip
 
 			inline operator bool() const
 			{
-				return is_open();
+				return (is_open() && has_segment());
 			}
 
 			/*
@@ -97,12 +98,21 @@ namespace clip
 				}
 			}
 
-			// This will clear all data stored in the clipboard.
-			bool clear();
-
 			// Logging will fail gracefully if the clipboard isn't open,
 			// or if a suitable output-stream could not be established.
 			bool log(const path_t& file_path, bool append=false) const;
+
+			// This will clear all data stored in the clipboard.
+			bool clear();
+			
+			std::size_t size() const;
+
+			// This returns the raw size of a clipboard data-segment. (In bytes)
+			std::size_t size(format type) const;
+
+			// This returns the length of the text-segment, rather than
+			// its size, as allocated by the operating system.
+			std::size_t text_length() const;
 
 			template <typename call_back_t>
 			inline int enumerate(const call_back_t& call_back, bool convert_types=false) const
@@ -111,7 +121,7 @@ namespace clip
 
 				platform::enum_clipboard_formats
 				(
-					[&](platform::clipboard_format type)
+					[&](format type)
 					{
 						count += 1;
 
@@ -128,6 +138,22 @@ namespace clip
 				(
 					[](platform::clipboard_format) { return true; }
 				);
+			}
+
+			inline bool has_segment() const
+			{
+				return enumerate
+				(
+					[](platform::clipboard_format)
+					{
+						return false;
+					}
+				);
+			}
+
+			inline bool has_text() const
+			{
+				return (text_length() > 0);
 			}
 
 			// Fields:

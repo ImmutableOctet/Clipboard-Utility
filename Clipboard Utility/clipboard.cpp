@@ -67,6 +67,10 @@ namespace clip
 
 	bool clipboard::open(const window& owner)
 	{
+		// Check if we're already open, before anything else:
+		if (is_open())
+			return true;
+
 		#ifdef CLIP_PLATFORM_WINDOWS
 			if (OpenClipboard(owner))
 			{
@@ -79,6 +83,10 @@ namespace clip
 	
 	bool clipboard::close(const window& owner)
 	{
+		// Check if we're already closed, before anything else:
+		if (is_closed())
+			return true;
+
 		#ifdef CLIP_PLATFORM_WINDOWS
 			if (CloseClipboard()) // wnd;
 			{
@@ -91,8 +99,8 @@ namespace clip
 
 	bool clipboard::log(const path_t& file_path, bool append) const
 	{
-		// Check if we have a handle to the clipboard, and if not, immediately fail:
-		if (!is_open())
+		// Check if we have a handle to the clipboard, if not, immediately fail:
+		if (is_closed())
 			return false;
 		
 		std::fstream fs;
@@ -117,7 +125,7 @@ namespace clip
 	bool clipboard::clear()
 	{
 		// Check if we have a handle to the clipboard, and if not, immediately fail:
-		if (!is_open())
+		if (is_closed())
 			return false;
 
 		#ifdef CLIP_PLATFORM_WINDOWS
@@ -125,5 +133,42 @@ namespace clip
 		#endif
 
 		return false;
+	}
+
+	std::size_t clipboard::size() const
+	{
+		std::size_t total_size = 0;
+
+		enumerate
+		(
+			[&](format type)
+			{
+				total_size += size(type);
+
+				return true;
+			}
+		);
+
+		return total_size;
+	}
+
+	std::size_t clipboard::size(format type) const
+	{
+		// Check if we have a handle to the clipboard, and if not, immediately return:
+		if (is_closed())
+			return 0;
+		
+		return memory::open(type).size();
+	}
+
+	std::size_t clipboard::text_length() const
+	{
+		// Check if we have a handle to the clipboard, and if not, immediately return:
+		if (is_closed())
+			return 0;
+
+		auto m = memory::open(format::TEXT);
+
+		return m.text_length();
 	}
 }
