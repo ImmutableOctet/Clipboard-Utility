@@ -40,6 +40,18 @@ namespace clip
 				return read<std::string>();
 			}
 
+			/*
+			inline bool operator[](format type=format::ANY) const
+			{
+				return has_segment(type);
+			}
+			*/
+
+			// Open a memory context for the format specified.
+			// The clipboard object must have an open handle to the system's clipboard.
+			// NOTE: When using this operator from the context of this class, beware of pointer-indexing.
+			memory operator[](format type) const;
+
 			// Methods:
 			inline bool is_open() const { return access; }
 			inline bool is_closed() const { return !is_open(); }
