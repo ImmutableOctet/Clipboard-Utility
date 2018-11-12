@@ -93,7 +93,7 @@ namespace clip
 
 		// Aliases (Win32):
 		#ifdef CLIP_PLATFORM_WINDOWS
-			using native_handle = HANDLE;
+			using native_handle = HANDLE; // HGLOBAL;
 			using window_handle = HWND;
 
 			const native_handle null_handle = NULL; // native_handle();
@@ -103,7 +103,7 @@ namespace clip
 		// Memory maps are used to handle globally allocated clipboard/system data.
 		// These maps are normally handled by 'clipboard' objects, and should only be
 		// used with the understanding that they are system controlled resources with differing behavior.
-		// For more details, view the 'memory_map::open' function.
+		// For more details, view the 'memory_map::open_clipboard' function.
 		struct memory_map
 		{
 			public:
@@ -124,12 +124,23 @@ namespace clip
 					
 					Under any other situation, behavior is OS/platform defined.
 				*/
-				static memory_map open(clipboard_format type);
+				static memory_map open_clipboard(clipboard_format type);
+
+				/*
+					This command submits a global memory-map to the operating system's clipboard.
+					
+					NOTE: This version of submit does not remove true-ownership from the memory-map.
+					
+					To submit and alter state appropriately
+					(Allowing the system and other applications to own the memory),
+					please use the method equivalent.
+				*/
+				static bool submit_clipboard(const memory_map& inst, clipboard_format type);
 
 				memory_map() = default;
-				memory_map(native_handle&& handle, memory_map::raw_memory_ptr&& memory);
-
+				memory_map(native_handle&& handle, memory_map::raw_memory_ptr&& memory, bool perfect_ownership=false);
 				memory_map(memory_map&& mem);
+				memory_map(std::size_t size, bool zero_init=false);
 
 				~memory_map();
 
@@ -139,8 +150,15 @@ namespace clip
 				inline bool locked() const { return (resource_ptr != nullptr); }
 				inline bool unlocked() const { return !locked(); }
 
+				inline bool perfect_ownership() const { return true_ownership; }
+
 				raw_memory_ptr lock();
 				bool unlock(raw_memory_ptr raw_memory);
+
+				// This calls the global-version in order to submit the contents of the global buffer,
+				// then alters the ownership status of this object, allowing the
+				// submitted memory to be owned by something else.
+				bool submit_clipboard(clipboard_format type);
 
 				/*
 					Returns the raw OS-defined size of the mapped memory block.
@@ -184,6 +202,8 @@ namespace clip
 
 				native_handle resource_handle = null_handle;
 				raw_memory_ptr resource_ptr = nullptr;
+
+				bool true_ownership = false;
 		};
 	}
 

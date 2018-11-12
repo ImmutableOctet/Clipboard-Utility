@@ -133,7 +133,7 @@ namespace clip
 			}
 		}
 
-		memory_map memory_map::open(clipboard_format type)
+		memory_map memory_map::open_clipboard(clipboard_format type)
 		{
 			#ifdef CLIP_PLATFORM_WINDOWS
 				handle native = GetClipboardData(type); // CF_TEXT
@@ -145,17 +145,52 @@ namespace clip
 			#endif
 		}
 
-		memory_map::memory_map(native_handle&& handle, memory_map::raw_memory_ptr&& memory)
+		bool memory_map::submit_clipboard(const memory_map& inst, clipboard_format type)
+		{
+			auto native_type = to_native_clipboard_format(type);
+
+			#ifdef CLIP_PLATFORM_WINDOWS
+				auto out_handle = inst.resource_handle;
+				auto data_handle = SetClipboardData(native_type, out_handle);
+				
+				if (data_handle != out_handle)
+				{
+					return false;
+				}
+
+				return true;
+			#endif
+
+			return false;
+		}
+
+		memory_map::memory_map(native_handle&& handle, memory_map::raw_memory_ptr&& memory, bool perfect_ownership)
+			: true_ownership(perfect_ownership)
 		{
 			std::swap(this->resource_handle, handle);
 			std::swap(this->resource_ptr, memory);
 		}
 
 		memory_map::memory_map(memory_map&& mem)
-			: memory_map(std::move(mem.resource_handle), std::move(nullptr))
+			: memory_map(std::move(mem.resource_handle), std::move(nullptr), mem.true_ownership)
 		{
 			// Just to be safe, initialize default-state for the moved object.
 			mem = memory_map();
+		}
+
+		memory_map::memory_map(std::size_t size, bool zero_init)
+		{
+			#ifdef CLIP_PLATFORM_WINDOWS
+				// NOTE: 'GMEM_FIXED' wouldn't work with the handle-based ownership system used here.
+				UINT allocation_flags = GMEM_MOVEABLE; // GHND;
+
+				if (zero_init)
+					allocation_flags |= GMEM_ZEROINIT;
+				
+				this->resource_handle = GlobalAlloc(allocation_flags, size);
+			#else
+				// Unimplemented.
+			#endif
 		}
 
 		// NOTE: The native handle is not closed in this implementation due
@@ -169,6 +204,13 @@ namespace clip
 			if (exists() && locked())
 			{
 				unlock();
+			}
+
+			if (true_ownership)
+			{
+				#ifdef CLIP_PLATFORM_WINDOWS
+					GlobalFree(resource_handle);
+				#endif
 			}
 		}
 
@@ -219,7 +261,6 @@ namespace clip
 			DEBUG_ASSERT(raw_memory != nullptr, "Invalid raw-memory pointer.");
 			DEBUG_ASSERT(this->resource_ptr == raw_memory, "Unknown memory resource given to open memory context.");
 			
-			// Fail on non-Windows platforms:
 			#ifdef CLIP_PLATFORM_WINDOWS
 				if (GlobalUnlock(this->resource_handle))
 				{
@@ -231,6 +272,20 @@ namespace clip
 			return unlocked();
 		}
 		
+		bool memory_map::submit_clipboard(clipboard_format type)
+		{
+			auto result = submit_clipboard(*this, type);
+
+			// Check if the submission was successful:
+			if (result)
+			{
+				// Data submitted; relinquish ownership to the operating system.
+				this->true_ownership = false;
+			}
+
+			return result;
+		}
+
 		std::size_t memory_map::size() const
 		{
 			// Make sure our handle is valid before

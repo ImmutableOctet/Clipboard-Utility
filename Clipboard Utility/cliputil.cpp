@@ -53,6 +53,8 @@ int main()
 
 			// Clear the clipboard's contents.
 			c.clear();
+
+			//std::cout << "Writing new message to the clipboard...\n";
 		}
 		else
 		{

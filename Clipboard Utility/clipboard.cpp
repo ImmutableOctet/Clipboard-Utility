@@ -101,7 +101,7 @@ namespace clip
 	{
 		ASSERT(is_open());
 
-		return memory::open(type);
+		return memory::open_clipboard(type);
 	}
 
 	bool clipboard::log(const path_t& file_path, bool append) const
