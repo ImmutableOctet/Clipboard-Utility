@@ -7,15 +7,13 @@
 #include <iostream>
 #include <fstream>
 
+static_assert(CLIP_PLATFORM == clip::platform::Windows, "Only windows is supported at this time.");
+
 namespace clip
 {
 	clipboard::clipboard(const window& wnd)
 		: owner(wnd)
 	{
-		#ifndef CLIP_PLATFORM_WINDOWS
-			DEBUG_ASSERT(false, "Unsupported platform.")
-		#endif
-		
 		open(owner);
 	}
 
@@ -29,6 +27,37 @@ namespace clip
 	clipboard::~clipboard()
 	{
 		close(owner);
+	}
+
+	// May be changed into a template at a later date.
+	std::string clipboard::read_text() const
+	{
+		using T = std::string;
+
+		static_assert(std::is_default_constructible_v<T>, "Specified type must be default-constructible.");
+		static_assert(std::is_constructible_v<T, const char*>, "Specified type must be constructible using 'const char*' as a parameter.");
+
+		ASSERT(is_open());
+
+		memory m = memory::open(format::TEXT);
+
+		// Check if we could open the handle.
+		if (m)
+		{
+			memory_lock guard(m);
+
+			auto raw_data = guard.ptr();
+
+			if (raw_data)
+			{
+				// ATTENTION: Not memory-safe; if an exception is thrown, we're leaving a handle locked.
+				auto out = T(raw_data);
+
+				return out;
+			}
+		}
+
+		return T();
 	}
 
 	bool clipboard::open(const window& owner)

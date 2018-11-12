@@ -1,6 +1,4 @@
 #include <iostream>
-#include <cassert>
-
 #include <cstdlib>
 
 #include "cliputil.hpp"
@@ -9,17 +7,24 @@ int main()
 {
 	using namespace clip;
 
-	assert(CLIP_PLATFORM == platform::Windows);
+	static_assert(CLIP_PLATFORM == CLIP_PLATFORM_WINDOWS, "Please build using Windows as your target platform.");
 
-	clip::clipboard c(clip::anonymous_window);
+	{
+		clip::clipboard c(clip::anonymous_window);
 
-	DEBUG_ASSERT(c.is_open(), "Clipboard not available.");
+		DEBUG_ASSERT(c.is_open(), "Clipboard not available.");
 
-	c.log("output/clipboard.txt");
-	c.clear();
+		// Log the clipboard to a text file.
+		c.log("output/clipboard.txt");
 
+		// Clear the clipboard's contents.
+		c.clear();
+	}
+
+	// Tell the user we're done.
 	std::cout << "Operations complete; exiting..." << std::endl;
 
+	// Pause the application.
 	std::system("PAUSE");
 
 	return 0;

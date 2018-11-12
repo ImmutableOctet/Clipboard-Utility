@@ -120,12 +120,14 @@
   <ItemGroup>
     <ClCompile Include="clipboard.cpp" />
     <ClCompile Include="cliputil.cpp" />
+    <ClCompile Include="platform.cpp" />
     <ClCompile Include="test.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="assert.hpp" />
     <ClInclude Include="clipboard.hpp" />
     <ClInclude Include="cliputil.hpp" />
+    <ClInclude Include="lock_guard.hpp" />
     <ClInclude Include="platform.hpp" />
     <ClInclude Include="test.hpp" />
     <ClInclude Include="types.hpp" />
