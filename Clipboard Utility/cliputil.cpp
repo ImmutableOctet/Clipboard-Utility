@@ -10,7 +10,19 @@ int main()
 	static_assert(CLIP_PLATFORM == CLIP_PLATFORM_WINDOWS, "Please build using Windows as your target platform.");
 	
 	const auto iterations = 2;
-	const auto test_seperator_length = 16;
+	const auto seperator_length = 16;
+
+	auto make_separator = [&]()
+	{
+		std::cout << "\n";
+
+		for (auto i = 1; i <= seperator_length; i++)
+		{
+			std::cout << '-';
+		}
+
+		std::cout << "\n";
+	};
 
 	for (auto i = 1; i <= iterations; i++)
 	{
@@ -63,14 +75,9 @@ int main()
 		
 		if (i < iterations)
 		{
-			std::cout << "Running tests again... (Tests remaining: " << (iterations - i) << ")\n" << std::endl;
+			std::cout << "Running tests again... (Tests remaining: " << (iterations - i) << ")\n";
 
-			for (auto i = 1; i <= test_seperator_length; i++)
-			{
-				std::cout << '-';
-			}
-
-			std::cout << "\n" << std::endl;
+			make_separator();
 		}
 	}
 

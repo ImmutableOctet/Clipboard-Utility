@@ -3,6 +3,7 @@
 #include <type_traits>
 #include <ostream>
 #include <cstddef>
+#include <stdexcept>
 
 #include "assert.hpp"
 #include "platform.hpp"
@@ -54,6 +55,14 @@ namespace clip
 				return context(type);
 			}
 
+			template <typename T>
+			inline clipboard& operator>>(T& out) const
+			{
+				out = read<T>();
+
+				return *this;
+			}
+
 			// Methods:
 			inline bool is_open() const { return access; }
 			inline bool is_closed() const { return !is_open(); }
@@ -84,29 +93,40 @@ namespace clip
 
 					if constexpr (std::is_arithmetic_v<T>)
 					{
-						if constexpr (std::is_same_v<T, long>)
+						try
 						{
-							return std::stol(data, nullptr, integer_base);
+							if constexpr (std::is_same_v<T, long>)
+							{
+								return std::stol(data, nullptr, integer_base);
+							}
+							else if constexpr (std::is_same_v<T, long long>) // (std::is_same_v<T, long long>)
+							{
+								return std::stoll(data, nullptr, integer_base);
+							}
+							else if constexpr (std::is_same_v<T, int> || std::is_convertible_v<int, T>)
+							{
+								return std::stoi(data, nullptr, integer_base);
+							}
+							else if constexpr (std::is_same_v<T, float>)
+							{
+								return std::stof(data);
+							}
+							else if constexpr (std::is_convertible_v<T, double>)
+							{
+								return std::stod(data);
+							}
+							else
+							{
+								static_assert(false, "Unable to find suitable conversion to arithmetic type.");
+							}
 						}
-						else if constexpr (std::is_same_v<T, long long>) // (std::is_same_v<T, long long>)
+						catch (const std::invalid_argument& ex)
 						{
-							return std::stoll(data, nullptr, integer_base);
+							return 0;
 						}
-						else if constexpr (std::is_same_v<T, int> || std::is_convertible_v<int, T>)
+						catch (const std::out_of_range& ex)
 						{
-							return std::stoi(data, nullptr, integer_base);
-						}
-						else if constexpr (std::is_same_v<T, float>)
-						{
-							return std::stof(data);
-						}
-						else if constexpr (std::is_convertible_v<T, double>)
-						{
-							return std::stod(data);
-						}
-						else
-						{
-							static_assert(false, "Unable to find suitable conversion to arithmetic type.");
+							return 0;
 						}
 					}
 					else
