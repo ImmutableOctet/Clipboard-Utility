@@ -140,20 +140,15 @@ namespace clip
 				);
 			}
 
-			inline bool has_segment() const
+			inline bool has_segment(format type=format::ANY) const
 			{
-				return enumerate
-				(
-					[](platform::clipboard_format)
-					{
-						return false;
-					}
-				);
+				return platform::has_clipboard_format(type);
 			}
 
 			inline bool has_text() const
 			{
-				return (text_length() > 0);
+				//return (text_length() > 0);
+				return has_segment(format::TEXT);
 			}
 
 			// Fields:

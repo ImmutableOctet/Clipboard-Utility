@@ -89,6 +89,8 @@ namespace clip
 		*/
 		void enum_clipboard_formats(const clipboard_enumerator& call_back, bool force_convert_types=false, clipboard_format starting_type=clipboard_format::ANY);
 
+		bool has_clipboard_format(clipboard_format type=clipboard_format::ANY, bool force_convert_type=false);
+
 		// Aliases (Win32):
 		#ifdef CLIP_PLATFORM_WINDOWS
 			using native_handle = HANDLE;

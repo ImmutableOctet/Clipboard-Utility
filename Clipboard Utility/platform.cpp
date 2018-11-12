@@ -98,13 +98,48 @@ namespace clip
 			#endif
 		}
 
+		bool has_clipboard_format(clipboard_format type, bool force_convert_type)
+		{
+			if (type == clipboard_format::ANY)
+			{
+				bool has_any_format = false;
+
+				enum_clipboard_formats
+				(
+					[&](platform::clipboard_format)
+					{
+						has_any_format = true;
+
+						return false;
+					}, false
+				);
+
+				return has_any_format;
+			}
+			else
+			{
+				#ifdef CLIP_PLATFORM_WINDOWS
+					native_clipboard_format native_type;
+
+					if (force_convert_type)
+						native_type = to_native_clipboard_format(type);
+					else
+						native_type = static_cast<native_clipboard_format>(type);
+
+					return IsClipboardFormatAvailable(native_type);
+				#else
+					return false;
+				#endif
+			}
+		}
+
 		memory_map memory_map::open(clipboard_format type)
 		{
 			#ifdef CLIP_PLATFORM_WINDOWS
-				handle native = GetClipboardData(type);
+				handle native = GetClipboardData(type); // CF_TEXT
 				memory::raw_memory_ptr native_ptr = nullptr;
 
-				return memory(std::move(native), std::move(native_ptr)); // CF_TEXT
+				return memory(std::move(native), std::move(native_ptr));
 			#else
 				return {};
 			#endif
