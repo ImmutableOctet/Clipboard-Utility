@@ -1,5 +1,14 @@
 #pragma once
 
+/*
+	TODO:
+		* Implement appending to the clipboard using the I/O operators.
+		* Implement other formats properly.
+		* Test current I/O functionality.
+*/
+
+
+// Includes:
 #include <type_traits>
 #include <ostream>
 #include <cstddef>
@@ -56,9 +65,18 @@ namespace clip
 			}
 
 			template <typename T>
-			inline clipboard& operator>>(T& out) const
+			inline clipboard& operator>>(T& out)
 			{
 				out = read<T>();
+
+				return *this;
+			}
+
+			template <typename T>
+			inline clipboard& operator<<(const T& in)
+			{
+				// Just for the sake of it, assert on this write-operation.
+				ASSERT(write<T>(in));
 
 				return *this;
 			}
@@ -75,11 +93,17 @@ namespace clip
 			memory context(format type) const;
 
 			std::string read_text() const;
+
+			// Reads from the 'TEXT' segment as "raw-data", rather than being formatted.
+			// The 'offset' argument is unsigned for safety purposes.
+			bool read_text_raw(void* data, std::size_t size, std::size_t offset=0) const;
+
 			bool write_text(const std::string& data) const;
+			bool write_text_raw(const void* data_in, std::size_t size, std::size_t offset=0) const;
 
 			// Memory is mapped and read from automatically when using 'read'.
 			template <typename T=std::string, int integer_base=10>
-			T read() const
+			T read(bool raw_transfer=false) const
 			{
 				//template <typename X>
 				//using is_type<X> = std::is_same<T, X>;
@@ -90,51 +114,86 @@ namespace clip
 				}
 				else
 				{
-					const auto data = read<std::string>();
-
-					if constexpr (std::is_arithmetic_v<T>)
+					if (raw_transfer)
 					{
-						try
-						{
-							if constexpr (std::is_same_v<T, long>)
-							{
-								return std::stol(data, nullptr, integer_base);
-							}
-							else if constexpr (std::is_same_v<T, long long>) // (std::is_same_v<T, long long>)
-							{
-								return std::stoll(data, nullptr, integer_base);
-							}
-							else if constexpr (std::is_same_v<T, int> || std::is_convertible_v<int, T>)
-							{
-								return std::stoi(data, nullptr, integer_base);
-							}
-							else if constexpr (std::is_same_v<T, float>)
-							{
-								return std::stof(data);
-							}
-							else if constexpr (std::is_convertible_v<T, double>)
-							{
-								return std::stod(data);
-							}
-							else
-							{
-								static_assert(false, "Unable to find suitable conversion to arithmetic type.");
-							}
-						}
-						catch (const std::invalid_argument& ex)
-						{
-							return 0;
-						}
-						catch (const std::out_of_range& ex)
-						{
-							return 0;
-						}
+						T data_out = {};
+
+						auto data_size = sizeof(data_out); // sizeof(T);
+
+						read_text_raw(&data_out, data_size);
+
+						return data_out;
 					}
 					else
 					{
-						static_assert(false, "Unable to find suitable conversion type.");
+						const auto data = read<std::string>();
+
+						if constexpr (std::is_arithmetic_v<T>)
+						{
+							try
+							{
+								if constexpr (std::is_same_v<T, long>)
+								{
+									return std::stol(data, nullptr, integer_base);
+								}
+								else if constexpr (std::is_same_v<T, long long>) // (std::is_same_v<T, long long>)
+								{
+									return std::stoll(data, nullptr, integer_base);
+								}
+								else if constexpr (std::is_same_v<T, int> || std::is_convertible_v<int, T>)
+								{
+									return std::stoi(data, nullptr, integer_base);
+								}
+								else if constexpr (std::is_same_v<T, float>)
+								{
+									return std::stof(data);
+								}
+								else if constexpr (std::is_convertible_v<T, double>)
+								{
+									return std::stod(data);
+								}
+								else
+								{
+									static_assert(false, "Unable to find suitable conversion to arithmetic type.");
+								}
+							}
+							catch (const std::invalid_argument& ex)
+							{
+								return 0;
+							}
+							catch (const std::out_of_range& ex)
+							{
+								return 0;
+							}
+						}
+						else
+						{
+							static_assert(false, "Unable to find suitable conversion type.");
+						}
 					}
 				}
+			}
+
+			template <typename T = std::string, int integer_base = 10>
+			bool write(const T& data, bool raw_transfer=false) const
+			{
+				if constexpr (std::is_same_v<T, std::string> || std::is_convertible_v<T, std::string>)
+				{
+					return write_text(data);
+				}
+				else if constexpr (std::is_arithmetic_v<T>)
+				{
+					if (raw_transfer)
+					{
+						return write_text_raw(&data, sizeof(data));
+					}
+					else
+					{
+						return write_text(std::to_string(data));
+					}
+				}
+
+				return false;
 			}
 
 			// Logging will fail gracefully if the clipboard isn't open,

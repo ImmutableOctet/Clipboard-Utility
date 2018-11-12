@@ -73,7 +73,7 @@ int main()
 
 		std::cout << "Writing new message to the clipboard...\n";
 
-		c.write_text("Hello world.");
+		c << "Hello world";
 		
 		if (i < iterations)
 		{

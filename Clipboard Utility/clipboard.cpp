@@ -41,13 +41,13 @@ namespace clip
 
 		auto m = context(format::TEXT);
 
-		// Check if we could open the memory segment:
+		// Check if we were able to open the memory segment:
 		if (m)
 		{
-			// Lock the memory segment, so that we're able to read from it.
+			// Lock the memory segment, so that we can read from it.
 			memory_lock guard(m);
 
-			// Retrieve a raw pointer to the memory segment:
+			// Retrieve a raw pointer to the memory segment.
 			const auto raw_data = guard.ptr();
 			
 			// Acquire a C-style string (Pointer) from our "raw-pointer".
@@ -65,28 +65,76 @@ namespace clip
 		return T();
 	}
 
-	bool clipboard::write_text(const std::string& data) const
+	bool clipboard::read_text_raw(void* data_out, std::size_t size, std::size_t offset) const
 	{
-		using T = std::string;
-
 		ASSERT(is_open());
 
-		auto out_data = data.c_str();
-		auto write_size = (data.size() + 1); // (std::strlen(out_data) + 1);
+		auto m = context(format::TEXT);
+
+		// Check if we were able to open the memory segment:
+		if (m)
+		{
+			// Determine if the area requested is within the memory-context's range:
+			if ((size + offset) > m.size())
+			{
+				return false;
+			}
+
+			// Lock the memory segment, so that we can read from it.
+			memory_lock guard(m);
+
+			// Retrieve a raw pointer to the memory segment.
+			const auto raw_data = guard.ptr();
+
+			// Acquire a C-style string (Pointer) from our "raw-pointer".
+			auto c_str = static_cast<const char*>(raw_data);
+
+			// Verify that the C-string exists before we try to use it.
+			if (c_str)
+			{
+				std::memcpy(data_out, (c_str + offset), size);
+
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	bool clipboard::write_text(const std::string& data) const
+	{
+		return write_text_raw(data.c_str(), (data.size() + 1));
+	}
+
+	bool clipboard::write_text_raw(const void* data, std::size_t size, std::size_t offset) const
+	{
+		ASSERT(is_open());
+
+		auto write_size = (size + offset);
 
 		auto m = memory(write_size, false);
 		
 		ASSERT(m && (m.size() >= write_size));
+
+		bool success = false;
 
 		{
 			memory_lock guard(m);
 
 			auto memory_location = guard.ptr();
 
-			std::memcpy(memory_location, out_data, write_size);
+			if (memory_location)
+			{
+				success = (std::memcpy((static_cast<char*>(memory_location) + offset), data, size) != nullptr);
+			}
 		}
 
-		return m.clipboard_submit(format::TEXT);
+		if (success)
+		{
+			return m.clipboard_submit(format::TEXT);
+		}
+
+		return false;
 	}
 
 	bool clipboard::open(const window& owner)
