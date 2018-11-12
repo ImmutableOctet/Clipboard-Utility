@@ -17,6 +17,15 @@ int main()
 		// Log the clipboard to a text file.
 		c.log("output/clipboard.txt");
 
+		auto clipboard_segments = c.count();
+
+		std::cout << "Entries found: " << clipboard_segments << "\n";
+
+		if (true) // c.has_text()
+		{
+			std::cout << "Text segment:" << "\n" << c << "\n\n";
+		}
+
 		// Clear the clipboard's contents.
 		c.clear();
 	}

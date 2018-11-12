@@ -104,6 +104,32 @@ namespace clip
 			// or if a suitable output-stream could not be established.
 			bool log(const path_t& file_path, bool append=false) const;
 
+			template <typename call_back_t>
+			inline int enumerate(const call_back_t& call_back, bool convert_types=false) const
+			{
+				int count = 0;
+
+				platform::enum_clipboard_formats
+				(
+					[&](platform::clipboard_format type)
+					{
+						count += 1;
+
+						return call_back(type);
+					}, convert_types
+				);
+
+				return count;
+			}
+
+			inline int count() const
+			{
+				return enumerate
+				(
+					[](platform::clipboard_format) { return true; }
+				);
+			}
+
 			// Fields:
 			const window& owner;
 

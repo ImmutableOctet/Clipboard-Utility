@@ -29,7 +29,7 @@ namespace clip
 		close(owner);
 	}
 
-	// May be changed into a template at a later date.
+	// This may be changed into a template at a later date:
 	std::string clipboard::read_text() const
 	{
 		using T = std::string;
@@ -39,21 +39,26 @@ namespace clip
 
 		ASSERT(is_open());
 
-		memory m = memory::open(format::TEXT);
+		auto m = memory::open(format::TEXT);
 
-		// Check if we could open the handle.
+		// Check if we could open the memory segment:
 		if (m)
 		{
+			// Lock the memory segment, so that we're able to read from it.
 			memory_lock guard(m);
 
-			auto raw_data = guard.ptr();
+			// Retrieve a raw pointer to the memory segment:
+			const auto raw_data = guard.ptr();
+			
+			// Acquire a C-style string (Pointer) from our "raw-pointer".
+			auto c_str = static_cast<const char*>(raw_data);
 
-			if (raw_data)
+			// Verify that the C-string exists before we try to use it.
+			if (c_str)
 			{
-				// ATTENTION: Not memory-safe; if an exception is thrown, we're leaving a handle locked.
-				auto out = T(raw_data);
-
-				return out;
+				// Copy our C-string into another object, then return it.
+				// Memory will be cleaned up automatically from here. (RAII)
+				return T(c_str);
 			}
 		}
 
