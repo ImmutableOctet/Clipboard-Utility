@@ -135,7 +135,7 @@ namespace clip
 					(Allowing the system and other applications to own the memory),
 					please use the method equivalent.
 				*/
-				static bool submit_clipboard(const memory_map& inst, clipboard_format type);
+				static bool clipboard_submit(const memory_map& inst, clipboard_format type);
 
 				memory_map() = default;
 				memory_map(native_handle&& handle, memory_map::raw_memory_ptr&& memory, bool perfect_ownership=false);
@@ -158,7 +158,7 @@ namespace clip
 				// This calls the global-version in order to submit the contents of the global buffer,
 				// then alters the ownership status of this object, allowing the
 				// submitted memory to be owned by something else.
-				bool submit_clipboard(clipboard_format type);
+				bool clipboard_submit(clipboard_format type);
 
 				/*
 					Returns the raw OS-defined size of the mapped memory block.

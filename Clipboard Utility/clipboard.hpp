@@ -75,6 +75,7 @@ namespace clip
 			memory context(format type) const;
 
 			std::string read_text() const;
+			bool write_text(const std::string& data) const;
 
 			// Memory is mapped and read from automatically when using 'read'.
 			template <typename T=std::string, int integer_base=10>

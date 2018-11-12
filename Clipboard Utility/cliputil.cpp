@@ -65,13 +65,15 @@ int main()
 
 			// Clear the clipboard's contents.
 			c.clear();
-
-			//std::cout << "Writing new message to the clipboard...\n";
 		}
 		else
 		{
 			std::cout << "No segments found. No reason to clear clipboard.\n";
 		}
+
+		std::cout << "Writing new message to the clipboard...\n";
+
+		c.write_text("Hello world.");
 		
 		if (i < iterations)
 		{

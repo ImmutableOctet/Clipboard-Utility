@@ -65,6 +65,30 @@ namespace clip
 		return T();
 	}
 
+	bool clipboard::write_text(const std::string& data) const
+	{
+		using T = std::string;
+
+		ASSERT(is_open());
+
+		auto out_data = data.c_str();
+		auto write_size = (data.size() + 1); // (std::strlen(out_data) + 1);
+
+		auto m = memory(write_size, false);
+		
+		ASSERT(m && (m.size() >= write_size));
+
+		{
+			memory_lock guard(m);
+
+			auto memory_location = guard.ptr();
+
+			std::memcpy(memory_location, out_data, write_size);
+		}
+
+		return m.clipboard_submit(format::TEXT);
+	}
+
 	bool clipboard::open(const window& owner)
 	{
 		// Check if we're already open, before anything else:

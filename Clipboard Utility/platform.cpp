@@ -145,7 +145,7 @@ namespace clip
 			#endif
 		}
 
-		bool memory_map::submit_clipboard(const memory_map& inst, clipboard_format type)
+		bool memory_map::clipboard_submit(const memory_map& inst, clipboard_format type)
 		{
 			auto native_type = to_native_clipboard_format(type);
 
@@ -262,19 +262,23 @@ namespace clip
 			DEBUG_ASSERT(this->resource_ptr == raw_memory, "Unknown memory resource given to open memory context.");
 			
 			#ifdef CLIP_PLATFORM_WINDOWS
-				if (GlobalUnlock(this->resource_handle))
+				if (GlobalUnlock(this->resource_handle) == FALSE)
 				{
-					// Unlock the resource by discarding the pointer when safe to do so.
-					this->resource_ptr = nullptr;
+					auto error_code = GetLastError();
+
+					ASSERT(error_code == NO_ERROR);
 				}
+				
+				// Unlock the resource by discarding the pointer when safe to do so.
+				this->resource_ptr = nullptr;
 			#endif
 
 			return unlocked();
 		}
 		
-		bool memory_map::submit_clipboard(clipboard_format type)
+		bool memory_map::clipboard_submit(clipboard_format type)
 		{
-			auto result = submit_clipboard(*this, type);
+			auto result = clipboard_submit(*this, type);
 
 			// Check if the submission was successful:
 			if (result)
@@ -294,6 +298,9 @@ namespace clip
 				return 0;
 
 			#ifdef CLIP_PLATFORM_WINDOWS
+				if (GlobalFlags(resource_handle) == GMEM_INVALID_HANDLE)
+					return 0;
+				
 				// Ask Windows how big the clipboard is.
 				return GlobalSize(resource_handle);
 			#endif
@@ -313,7 +320,7 @@ namespace clip
 			const auto raw_data = view.ptr();
 
 			// Return the length of our zero-terminated character-data.
-			return strlen(reinterpret_cast<const char*>(raw_data));
+			return std::strlen(reinterpret_cast<const char*>(raw_data));
 		}
 	}
 }
