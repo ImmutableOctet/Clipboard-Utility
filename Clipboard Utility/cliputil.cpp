@@ -1,5 +1,7 @@
 #include <iostream>
 #include <cstdlib>
+#include <chrono>
+#include <thread>
 
 #include "cliputil.hpp"
 
@@ -14,14 +16,14 @@ int main()
 
 	auto make_separator = [&]()
 	{
-		std::cout << "\n";
+		std::cout << '\n';
 
 		for (auto i = 1; i <= seperator_length; i++)
 		{
 			std::cout << '-';
 		}
 
-		std::cout << "\n";
+		std::cout << '\n';
 	};
 
 	for (auto i = 1; i <= iterations; i++)
@@ -29,11 +31,22 @@ int main()
 		std::cout << "Running test suite... (#" << i << ")\n\n";
 
 		
-		std::cout << "Opening handle to clipboard.\n";
+		std::cout << "Opening handle to clipboard...\n";
 		
 		clip::clipboard c(clip::anonymous_window);
 
-		DEBUG_ASSERT(c.is_open(), "Clipboard not available.");
+		//DEBUG_ASSERT(c.is_open(), "Clipboard not available.");
+
+		while (c.is_closed())
+		{
+			std::cout << "Unable to open handle to clipboard, retrying...\n";
+			std::this_thread::sleep_for(std::chrono::seconds(1));
+
+			if (c.open())
+			{
+				std::cout << "Clipboard handle opened." << std::endl;
+			}
+		}
 
 		
 		std::cout << "\nCounting clipboard segments...\n\n";
