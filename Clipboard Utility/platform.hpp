@@ -1,8 +1,10 @@
 #pragma once
 
+#include "build_info.hpp"
+
 // A bit of a C-ism, but I'm too lazy to declare
 // a separate source fiile for this:
-#ifdef _WIN32
+#ifdef _CLIP_WIN32
 	#define CLIP_PLATFORM_WINDOWS clip::platform::Windows
 	
 	#define CLIP_PLATFORM CLIP_PLATFORM_WINDOWS
@@ -140,7 +142,18 @@ namespace clip
 				memory_map() = default;
 				memory_map(native_handle&& handle, memory_map::raw_memory_ptr&& memory, bool perfect_ownership=false);
 				memory_map(memory_map&& mem);
-				memory_map(std::size_t size, bool zero_init=false);
+				memory_map
+				(
+					std::size_t size,
+					
+					bool
+
+					#ifndef CLIP_DEBUG
+						zero_init = false
+					#else
+						zero_init = true
+					#endif
+				);
 
 				~memory_map();
 

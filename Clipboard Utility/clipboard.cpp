@@ -74,8 +74,10 @@ namespace clip
 		// Check if we were able to open the memory segment:
 		if (m)
 		{
+			const auto memory_size = m.size();
+
 			// Determine if the area requested is within the memory-context's range:
-			if ((size + offset) > m.size())
+			if ((size + offset) > memory_size)
 			{
 				return false;
 			}
@@ -87,14 +89,12 @@ namespace clip
 			const auto raw_data = guard.ptr();
 
 			// Acquire a C-style string (Pointer) from our "raw-pointer".
-			auto c_str = static_cast<const char*>(raw_data);
+			auto raw_bytes = reinterpret_cast<const uint8_t*>(raw_data);
 
 			// Verify that the C-string exists before we try to use it.
-			if (c_str)
+			if (raw_bytes)
 			{
-				std::memcpy(data_out, (c_str + offset), size);
-
-				return true;
+				return (std::memcpy(data_out, (raw_bytes + offset), size) != nullptr);
 			}
 		}
 
@@ -110,11 +110,13 @@ namespace clip
 	{
 		ASSERT(is_open());
 
-		auto write_size = (size + offset);
+		const auto write_size = (size + offset);
 
-		auto m = memory(write_size, false);
+		auto m = memory(write_size);
 		
-		ASSERT(m && (m.size() >= write_size));
+		const auto memory_size = m.size();
+
+		ASSERT(m && (memory_size >= write_size));
 
 		bool success = false;
 
@@ -125,7 +127,7 @@ namespace clip
 
 			if (memory_location)
 			{
-				success = (std::memcpy((static_cast<char*>(memory_location) + offset), data, size) != nullptr);
+				success = (std::memcpy((reinterpret_cast<std::uint8_t*>(memory_location) + offset), data, size) != nullptr);
 			}
 		}
 

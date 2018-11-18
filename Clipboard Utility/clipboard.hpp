@@ -118,9 +118,9 @@ namespace clip
 					{
 						T data_out = {};
 
-						auto data_size = sizeof(data_out); // sizeof(T);
+						auto result = read_text_raw(&data_out, sizeof(data_out));
 
-						read_text_raw(&data_out, data_size);
+						ASSERT(result);
 
 						return data_out;
 					}
@@ -132,36 +132,46 @@ namespace clip
 						{
 							try
 							{
-								if constexpr (std::is_same_v<T, long>)
+								if constexpr (std::is_floating_point_v<T>)
 								{
-									return std::stol(data, nullptr, integer_base);
-								}
-								else if constexpr (std::is_same_v<T, long long>) // (std::is_same_v<T, long long>)
-								{
-									return std::stoll(data, nullptr, integer_base);
-								}
-								else if constexpr (std::is_same_v<T, int> || std::is_convertible_v<int, T>)
-								{
-									return std::stoi(data, nullptr, integer_base);
-								}
-								else if constexpr (std::is_same_v<T, float>)
-								{
-									return std::stof(data);
-								}
-								else if constexpr (std::is_convertible_v<T, double>)
-								{
-									return std::stod(data);
+									if constexpr (std::is_same_v<T, float>)
+									{
+										return std::stof(data);
+									}
+									else if constexpr (std::is_same_v<T, double>)
+									{
+										return std::stod(data);
+									}
+									else
+									{
+										static_assert(false, "Unable to find suitable conversion to floating-point arithmetic type.");
+									}
 								}
 								else
 								{
-									static_assert(false, "Unable to find suitable conversion to arithmetic type.");
+									if constexpr (std::is_same_v<T, long>)
+									{
+										return std::stol(data, nullptr, integer_base);
+									}
+									else if constexpr (std::is_same_v<T, long long>) // (std::is_same_v<T, long long>)
+									{
+										return std::stoll(data, nullptr, integer_base);
+									}
+									else if constexpr (std::is_same_v<T, int> || std::is_convertible_v<int, T>)
+									{
+										return std::stoi(data, nullptr, integer_base);
+									}
+									else
+									{
+										static_assert(false, "Unable to find suitable conversion to integral arithmetic type.");
+									}
 								}
 							}
-							catch (const std::invalid_argument& ex)
+							catch (const std::invalid_argument&)
 							{
 								return 0;
 							}
-							catch (const std::out_of_range& ex)
+							catch (const std::out_of_range&)
 							{
 								return 0;
 							}

@@ -125,6 +125,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="assert.hpp" />
+    <ClInclude Include="build_info.hpp" />
     <ClInclude Include="clipboard.hpp" />
     <ClInclude Include="cliputil.hpp" />
     <ClInclude Include="lock_guard.hpp" />

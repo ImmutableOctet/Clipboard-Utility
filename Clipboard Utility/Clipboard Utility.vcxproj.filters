@@ -50,5 +50,8 @@
     <ClInclude Include="lock_guard.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="build_info.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
